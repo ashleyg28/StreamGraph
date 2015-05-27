@@ -112,12 +112,33 @@
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+/* correct this function
         var graph = d3.csv(csvpath, function(data) {
             data.forEach(function(d) {
                 d.date = format.parse(d.date);
                 d.value = +d.value;
+            });*/
+
+        var graph = d3.csv(csvpath, function(raw) {
+            var data = [];
+            raw.forEach(function (d) {
+                data.push({
+                    key: d.Country,
+                    date : new Date(1980),
+                    value : parseInt(d['1980-1989'].replace(',','')) //get rid of the thousand separator
+                });
+                data.push({
+                    key: d.Country,
+                    date : new Date(1990),
+                    value : parseInt(d['1990-1999'].replace(',',''))
+                });
+                data.push({
+                    key: d.Country,
+                    date : new Date(2000),
+                    value : parseInt(d['2000-2009'].replace(',','') )
+                });
             });
+
 
             var layers = stack(nest.entries(data));
 
