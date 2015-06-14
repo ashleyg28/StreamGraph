@@ -1,221 +1,26 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <style>
-    body {
+    body{
         font: 10px sans-serif;
     }
-    .chart {
+    .chart{
         background: #fff;
     }
-    p {
-        font: 12px helvetica;
+    p{
+        font:12px helvetica;
     }
-    .axis path, .axis line {
+    .axis path, .axis line{
         fill: none;
         stroke: #000;
         stroke-width: 2px;
         shape-rendering: crispEdges;
     }
-    button {
+    button{
         position: absolute;
         right: 50px;
         top: 10px;
     }
-</style>
-<body>
-<script src="http://d3js.org/d3.v3.js"></script>
-
-
-<div class="chart">
-</div>
-
-<script>
-    chart("Data.csv", "blue");
-    var datearray = [];
-    var colorrange = [];
-    d3.select('body')
-            .append('svg')
-            .attr('height', 100)
-            .attr('width', 100)
-            .attr('height', 100)
-            .attr('width', 100);
-
-    d3.select('body')
-            .append('svg')
-            .attr('height', 100)
-            .attr('width', 100)
-            .attr('height', 100)
-            .attr('width', 100);
-    function chart(csvpath, color) {
-        if (color == "blue") {
-            colorrange = ["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"];
-        }
-        else if (color == "pink") {
-            colorrange = ["#980043", "#DD1C77", "#DF65B0", "#C994C7", "#D4B9DA", "#F1EEF6"];
-        }
-        else if (color == "orange") {
-            colorrange = ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"];
-        }
-        strokecolor = colorrange[0];
-        var format = d3.time.format("%m/%d/%y");
-        var margin = {top: 20, right: 40, bottom: 30, left: 50};
-        var width = document.body.clientWidth - margin.left - margin.right;
-        var height = 400 - margin.top - margin.bottom;
-        var tooltip = d3.select("body")
-                .append("div")
-                .attr("class", "remove")
-                .style("position", "absolute")
-                .style("z-index", "20")
-                .style("visibility", "hidden")
-                .style("top", "30px")
-                .style("left", "75px");
-        var x = d3.time.scale()
-                .range([0, width]);
-        var y = d3.scale.linear()
-                .range([height-10, 0]);
-        var z = d3.scale.ordinal()
-                .range(colorrange);
-        var xAxis = d3.svg.axis()
-                .orient("bottom")
-                .scale(x)
-                .ticks(d3.time.years, 10); //tick on every 10 years
-        /*.scale(x)
-         .orient("bottom")
-         .text(date)
-         //;*/
-        //. tickFormat(x)
-        //. tickValues(date)
-        //was already there but out of view -> changed the left margin
-        var yAxis = d3.svg.axis()
-                .scale(y);
-        var stack = d3.layout.stack()
-                .offset("silhouette")
-                .values(function(d) { return d.values; })
-                .x(function(d) { return d.date; })
-                .y(function(d) { return d.value; });
-        var nest = d3.nest()
-                .key(function(d) { return d.key; });
-        var area = d3.svg.area()
-                .interpolate("cardinal")
-                .x(function(d) { return x(d.date); })
-                .y0(function(d) { return y(d.y0); })
-                .y1(function(d) { return y(d.y0 + d.y); });
-        var svg = d3.select(".chart").append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        /* correct this function
-         var graph = d3.csv(csvpath, function(data) {
-         data.forEach(function(d) {
-         d.date = format.parse(d.date);
-         d.value = +d.value;
-         });*/
-        var graph = d3.csv(csvpath, function(raw) {
-            var data = [];
-            raw.forEach(function (d) {
-                data.push({
-                    key: d.Country,
-                    date : new Date(1980,0,1), //I had a bug in creating the right dates
-                    value : parseInt(d['1980-1989'].replace(',','')) //get rid of the thousand separator
-                });
-                data.push({
-                    key: d.Country,
-                    date : new Date(1990,0,1),
-                    value : parseInt(d['1990-1999'].replace(',',''))
-                });
-                data.push({
-                    key: d.Country,
-                    date : new Date(2000,0,1),
-                    value : parseInt(d['2000-2009'].replace(',','') )
-                });
-            });
-            var layers = stack(nest.entries(data));
-            x.domain(d3.extent(data, function(d) { return d.date; }));
-            y.domain([0, d3.max(data, function(d) { return d.y0 + d.y; })]);
-            svg.selectAll(".layer")
-                    .data(layers)
-                    .enter().append("path")
-                    .attr("class", "layer")
-                    .attr("d", function(d) { return area(d.values); })
-                    .style("fill", function(d, i) { return z(i); });
-            //adding .text causes axis to dissapear
-            svg.append("g")
-                    .attr("class", "x axis")
-                    .attr("transform", "translate(0," + height + ")")
-                //.text(date)
-                    .call(xAxis);
-            svg.append("g")
-                    .attr("class", "y axis")
-                    .attr("transform", "translate(" + width + ", 0)")
-                //.text(value)
-                    .call(yAxis.orient("right"));
-            svg.append("g")
-                    .attr("class", "y axis")
-                    .call(yAxis.orient("left"));
-            var pro;
-            svg.selectAll(".layer")
-                    .attr("opacity", 1)
-                    .on("mouseover", function(d, i) {
-                        svg.selectAll(".layer").transition()
-                                .duration(250)
-                                .attr("opacity", function(d, j) {
-                                    return j != i ? 0.6 : 1;
-                                })})
-                    .on("mousemove", function(d, i) {
-                        var mousex = d3.mouse(this);
-                        mousex = mousex[0];
-                        var invertedx = x.invert(mousex);
-                        //find the largest smaller element
-                        var dd = d.values.filter(function(d) { return d.date <= invertedx; });
-                        dd = dd[dd.length -1]; //use the last element
-                        pro = dd.value;
-                        d3.select(this)
-                                .classed("hover", true)
-                                .attr("stroke", strokecolor)
-                                .attr("stroke-width", "0.5px");
-                        tooltip.html( "<p>" + d.key + "<br>" + pro + "</p>" ).style("visibility", "visible");
-                    })
-                    .on("mouseout", function(d, i) {
-                        svg.selectAll(".layer")
-                                .transition()
-                                .duration(250)
-                                .attr("opacity", "1");
-                        d3.select(this)
-                                .classed("hover", false)
-                                .attr("stroke-width", "0px");
-                        tooltip.html( "<p>" + d.key + "<br>" + pro + "</p>" ).style("visibility", "hidden");
-                    })
-            var vertical = d3.select(".chart")
-                    .append("div")
-                    .attr("class", "remove")
-                    .style("position", "absolute")
-                    .style("z-index", "19")
-                    .style("width", "1px")
-                    .style("height", "380px")
-                    .style("top", "10px")
-                    .style("bottom", "30px")
-                    .style("left", "0px")
-                    .style("background", "#fff");
-            d3.select(".chart")
-                    .on("mousemove", function(){
-                        var mousex = d3.mouse(this);
-                        mousex = mousex[0] + 5;
-                        vertical.style("left", mousex + "px" )})
-                    .on("mouseover", function(){
-                        var mousex = d3.mouse(this);
-                        mousex = mousex[0] + 5;
-                        vertical.style("left", mousex + "px")});
-        });
-    }
-
-
-</script>
-
-<!DOCTYPE html>
-<meta charset="utf-8">
-<title>U.S Immigration Data Visualization</title>
-<style>
     .country:hover{
         stroke: #fff;
         stroke-width: 1.5px;
@@ -256,200 +61,517 @@
         stroke-width: 1px;
     }
 
+    #container {
+        margin:10px 10%;
+        padding:20px;
+        border:2px solid #d0d0d0;
+        border-radius: 5px;
+        height:100%;
+        clear:both;
+    }
+    .hidden {
+        display: none;
+    }
+
+    #info{
+        margin:14px 10%;
+        background: #fff;
+        border: 2px solid #ccc;
+        padding:10px;
+    }
+    #info div {
+        height:20px;
+        clear:both;
+    }
+
+    #info label {
+        font-weight: bold;
+        width: 130px;
+        display: inline-block;
+        text-transform: capitalize;
+    }
+/*
+    .hidden {
+        display: none;
+    }*/
+/*    div.tooltip {
+        color: #222;
+        background: #fff;
+        padding: .5em;
+        text-shadow: #f5f5f5 0 1px 0;
+        border-radius: 2px;
+        box-shadow: 0px 0px 2px 0px #a6a6a6;
+        opacity: 0.9;
+        position: absolute;
+    }*/
+
 </style>
-</head>
-<br>
+<body>
+<div class="block">
+    <label for="country">Select a Country:</label>
+    <select id="country" name="country"></select>
+</div>
 
-<h1><center>U.S Immigration Data Visualization</center></h1>
-<h2><b>Work in Progress</b></h2>
-<h3><b>Ex-USSR countries included in Russia</b></h3>
-<h3><b>Ex-Yugoslavia included in Macedonia</b></h3>
+<div class="block">
+    <label for="trend">Highlight Countries by Immigration Trend:</label>
+    <select id="trend" name="trend">
+        <option value="0">Select Here</option>
+        <option value="1. Immigration Increase">Immigration Increase</option>
+        <option value="2. Immigration Decline">Immigration Decline</option>
+        <option value="3. Stable Immigration">Stable Immigration</option>
+        <option value="4. No Data">No Data</option>
+    </select>
+</div>
 
-
+<!--SECTIONS-->
 <div id="container"></div>
+<div id="info"></div>
 
+<!--SOURCES-->
 <script src="js/d3.min.js"></script>
 <script src="js/topojson.v1.min.js"></script>
 <script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
+<script src="js/d3.min.js"></script>
+
+
 <script>
-    d3.select(window).on("resize", throttle);
+    var highlightCountry = [];
+    function triggerHighlight(country) {
+        highlightCountry.forEach(function(d) {d(country); });
+    }
+    function streamgraphVis() {
+        //code A with all variables
+        //... .on('mouseover', function(d) {
+        //    ...
+        //    triggerHighlight(d);
+        //}
+        chart("Data.csv", "blue");
+        var datearray = [];
+        var colorrange = [];
+        function chart(csvpath, color) {
+            if (color == "blue") {
+                colorrange = ["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"];
+            }
+            else if (color == "pink") {
+                colorrange = ["#980043", "#DD1C77", "#DF65B0", "#C994C7", "#D4B9DA", "#F1EEF6"];
+            }
+            else if (color == "orange") {
+                colorrange = ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"];
+            }
+            strokecolor = colorrange[0];
+            var format = d3.time.format("%m/%d/%y");
+            var margin = {top: 20, right: 40, bottom: 30, left: 50};
+            var width = document.body.clientWidth - margin.left - margin.right;
+            var height = 400 - margin.top - margin.bottom;
+            var tooltip = d3.select("body")
+                    .append("div")
+                    .attr("class", "remove")
+                    .style("position", "absolute")
+                    .style("z-index", "20")
+                    .style("visibility", "hidden")
+                    .style("top", "30px")
+                    .style("left", "75px");
+            var x = d3.time.scale()
+                    .range([0, width]);
+            var y = d3.scale.linear()
+                    .range([height-10, 0]);
+            var z = d3.scale.ordinal()
+                    .range(colorrange);
+            var xAxis = d3.svg.axis()
+                    .orient("bottom")
+                    .scale(x)
+                    .ticks(d3.time.years, 10); //tick on every 10 years
+            /*.scale(x)
+             .orient("bottom")
+             .text(date)
+             //;*/
+            //. tickFormat(x)
+            //. tickValues(date)
+            //was already there but out of view -> changed the left margin
+            var yAxis = d3.svg.axis()
+                    .scale(y);
+            var stack = d3.layout.stack()
+                    .offset("silhouette")
+                    .values(function(d) { return d.values; })
+                    .x(function(d) { return d.date; })
+                    .y(function(d) { return d.value; });
+            var nest = d3.nest()
+                    .key(function(d) { return d.key; });
+            var area = d3.svg.area()
+                    .interpolate("cardinal")
+                    .x(function(d) { return x(d.date); })
+                    .y0(function(d) { return y(d.y0); })
+                    .y1(function(d) { return y(d.y0 + d.y); });
+            var svg = d3.select(".chart").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            /* correct this function
+             var graph = d3.csv(csvpath, function(data) {
+             data.forEach(function(d) {
+             d.date = format.parse(d.date);
+             d.value = +d.value;
+             });*/
+            var graph = d3.csv(csvpath, function(raw) {
+                var data = [];
+                raw.forEach(function (d) {
+                    data.push({
+                        key: d.Country,
+                        date : new Date(1980,0,1), //I had a bug in creating the right dates
+                        value : parseInt(d['1980-1989'].replace(',','')) //get rid of the thousand separator
+                    });
+                    data.push({
+                        key: d.Country,
+                        date : new Date(1990,0,1),
+                        value : parseInt(d['1990-1999'].replace(',',''))
+                    });
+                    data.push({
+                        key: d.Country,
+                        date : new Date(2000,0,1),
+                        value : parseInt(d['2000-2009'].replace(',','') )
+                    });
+                });
+                var layers = stack(nest.entries(data));
+                x.domain(d3.extent(data, function(d) { return d.date; }));
+                y.domain([0, d3.max(data, function(d) { return d.y0 + d.y; })]);
+                svg.selectAll(".layer")
+                        .data(layers)
+                        .enter().append("path")
+                        .attr("class", "layer")
+                        .attr("d", function(d) { return area(d.values); })
+                        .style("fill", function(d, i) { return z(i); });
+                //adding .text causes axis to dissapear
+                svg.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                    //.text(date)
+                        .call(xAxis);
+                svg.append("g")
+                        .attr("class", "y axis")
+                        .attr("transform", "translate(" + width + ", 0)")
+                    //.text(value)
+                        .call(yAxis.orient("right"));
+                svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis.orient("left"));
+                var pro;
+                svg.selectAll(".layer")
+                        .attr("opacity", 1)
+                        .on("mouseover", function(d, i) {
+                            svg.selectAll(".layer").transition()
+                                    .duration(250)
+                                    .attr("opacity", function(d, j) {
+                                        return j != i ? 0.6 : 1;
+                                    })})
+                        .on("mousemove", function(d, i) {
+                            var mousex = d3.mouse(this);
+                            mousex = mousex[0];
+                            var invertedx = x.invert(mousex);
+                            //find the largest smaller element
+                            var dd = d.values.filter(function(d) { return d.date <= invertedx; });
+                            dd = dd[dd.length -1]; //use the last element
+                            pro = dd.value;
+                            d3.select(this)
+                                    .classed("hover", true)
+                                    .attr("stroke", strokecolor)
+                                    .attr("stroke-width", "0.5px");
+                            tooltip.html( "<p>" + d.key + "<br>" + pro + "</p>" ).style("visibility", "visible");
+                        })
+                        .on("mouseout", function(d, i) {
+                            svg.selectAll(".layer")
+                                    .transition()
+                                    .duration(250)
+                                    .attr("opacity", "1");
+                            d3.select(this)
+                                    .classed("hover", false)
+                                    .attr("stroke-width", "0px");
+                            tooltip.html( "<p>" + d.key + "<br>" + pro + "</p>" ).style("visibility", "hidden");
+                        })
+                var vertical = d3.select(".chart")
+                        .append("div")
+                        .attr("class", "remove")
+                        .style("position", "absolute")
+                        .style("z-index", "19")
+                        .style("width", "1px")
+                        .style("height", "380px")
+                        .style("top", "10px")
+                        .style("bottom", "30px")
+                        .style("left", "0px")
+                        .style("background", "#fff");
+                d3.select(".chart")
+                        .on("mousemove", function(){
+                            var mousex = d3.mouse(this);
+                            mousex = mousex[0] + 5;
+                            vertical.style("left", mousex + "px" )})
+                        .on("mouseover", function(){
+                            var mousex = d3.mouse(this);
+                            mousex = mousex[0] + 5;
+                            vertical.style("left", mousex + "px")});
+            });
+        }
 
-    var zoom = d3.behavior.zoom()
-            .scaleExtent([1, 9])
-            .on("zoom", move);
 
 
-    var width = document.getElementById('container').offsetWidth;
-    var height = width / 2;
-
-    var topo,projection,path,svg,g;
-
-    var graticule = d3.geo.graticule();
-
-    var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
-
-    setup(width,height);
-
-    function setup(width,height){
-        projection = d3.geo.mercator()
-                .translate([(width/2), (height/2)])
-                .scale( width / 2 / Math.PI);
-
-        path = d3.geo.path().projection(projection);
-
-        svg = d3.select("#container").append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .call(zoom)
-                .on("click", click)
-                .append("g");
-
-        g = svg.append("g");
-
+        highlightCountry.push(function(country) {
+            //highlight the given country in the  map vis
+        });
     }
 
-    d3.json("data/world-topo-min.json", function(error, world) {
+    function mapVis() {
+        //code B with all variables
+        (function () {
+            function n(n) {
+                function t() {
+                    for (; f = a < c.length && n > p;) {
+                        var u = a++, t = c[u], r = l.call(t, 1);
+                        r.push(e(u)), ++p, t[0].apply(null, r)
+                    }
+                }
 
-        var countries = topojson.feature(world, world.objects.countries).features;
+                function e(n) {
+                    return function (u, l) {
+                        --p, null == d && (null != u ? (d = u, a = s = 0 / 0, r()) : (c[n] = l, --s ? f || t() : r()))
+                    }
+                }
 
-        topo = countries;
-        draw(topo);
+                function r() {
+                    null != d ? v(d) : i ? v(d, c) : v.apply(null, [d].concat(c))
+                }
 
-    });
+                var o, f, i, c = [], a = 0, p = 0, s = 0, d = null, v = u;
+                return n || (n = 1 / 0), o = {
+                    defer: function () {
+                        return d || (c.push(arguments), ++s, t()), o
+                    }, await: function (n) {
+                        return v = n, i = !1, s || r(), o
+                    }, awaitAll: function (n) {
+                        return v = n, i = !0, s || r(), o
+                    }
+                }
+            }
 
-    function draw(topo) {
+            function u() {
+            }
 
-        svg.append("path")
-                .datum(graticule)
-                .attr("class", "graticule")
-                .attr("d", path);
+            "undefined" == typeof module ? self.queue = n : module.exports = n, n.version = "1.0.4";
+            var l = [].slice
+        })();
+
+        var graticule = d3.geo.graticule();
+
+        var width = document.getElementById('container').offsetWidth;
+        var height = width / 2;
+
+        var topo, projection, path, svg, g, all, cdata,
+                current = 10; //current country, randomly choosen number
+
+        var tooltip = d3.select("body").append("div").attr("class", "tooltip hidden");
+
+        setup(width, height);
+// MAP SETUP
+        function setup(width, height) {
+
+            projection = d3.geo.mercator()
+                    .translate([(width / 3), (height / .7)])
+                    .scale(width / .55 / Math.PI);
+
+            path = d3.geo.path().projection(projection);
+
+            svg = d3.select("#container").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+            svg.append("rect")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .style("fill", "#fff")
+                    .on("click", loadworldmap);
+
+            var outterg = svg.append("g").attr("transform", "translate(" + width / 5.5 + "," + height / 3.5 + ")");
+
+            g = outterg.append("g").attr("id", "innerg");
+
+        }
 
 
-        g.append("path")
-                .datum({type: "LineString", coordinates: [[-180, 0], [-90, 0], [0, 0], [90, 0], [180, 0]]})
-                .attr("class", "equator")
-                .attr("d", path);
+        queue()//data queue
+                .defer(d3.csv, "data/countries-data.csv")
+                .await(ready);
+
+        function ready(error, countries) {
+            cdata = countries;
 
 
-        var country = g.selectAll(".country").data(topo);
-
-        country.enter().insert("path")
-                .attr("class", "country")
-                .attr("d", path)
-                .attr("id", function(d,i) { return d.id; })
-                .attr("title", function(d,i) { return d.properties.name; })
-                .style("fill", function(d, i) { return d.properties.color; });
-
-        //offsets for tooltips
-        var offsetL = document.getElementById('container').offsetLeft+20;
-        var offsetT = document.getElementById('container').offsetTop+10;
-
-        //tooltips
-        country
-                .on("mousemove", function(d,i) {
-
-                    var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
-
-                    tooltip.classed("hidden", false)
-                            .attr("style", "left:"+(mouse[0]+offsetL)+"px;top:"+(mouse[1]+offsetT)+"px")
-                            .html(d.properties.name);
-
-                })
-                .on("mouseout",  function(d,i) {
-                    tooltip.classed("hidden", true);
-                });
+            loadworldmap();
 
 
-        //EXAMPLE: adding some capitals from external CSV file
-        d3.csv("data/country-capitals.csv", function(err, capitals) {
+            //country dropdown
+            var options = '';
+            cdata.forEach(function (d) {
 
-            capitals.forEach(function(i){
-                addpoint(i.CapitalLongitude, i.CapitalLatitude );
+                options += '<option value="' + d.iso_a3 + '">' + d.name + '</option>';
             });
 
+            d3.select("#country").html(options)
+                    .on("change", function () {
+                        d3.select("#trend")[0][0].selectedIndex = 0;
+                        var sel = this.value;
+                        var obj = cdata.filter(function (f) {
+                            return f.iso_a3 == sel
+                        })[0];
+                        loadit(obj);
+                    });
+
+            //color countries and print country names to info box
+            function colorandprint(objs, title) {
+                d3.selectAll('.country').style('fill', '#deebf7'); //clear
+
+
+                objs.forEach(function (f) {
+                    d3.select('.country[title="' + f.name, f.name + '"]').style('fill', '#08306b')
+
+
+                });
+
+                d3.select("#info").html(html);
+            }
+
+
+            //trend dropdown
+            d3.select("#trend").on("change", function () {
+
+                d3.select("#country")[0][0].selectedIndex = 0;
+
+                var sel = this.value;
+                if (sel !== 0) {
+                    var objs = cdata.filter(function (f) {
+                        return f.trend == sel
+                    });
+                    colorandprint(objs, sel);
+                }
+
+            });
+
+        }
+
+// DRAWING OF THE MAP
+        function loadworldmap() {
+
+            clear();
+            g.style("stroke-width", 1).attr("transform", "");
+            d3.json("data/world-topo-110m.json", function (error, world) {
+
+                var topo = topojson.feature(world, world.objects.countries).features;
+
+                var country = d3.select("#innerg").selectAll(".country").data(topo);
+
+                //ofsets
+                var offsetL = document.getElementById('container').offsetLeft + 30;
+                var offsetT = document.getElementById('container').offsetTop - 30;
+
+                country.enter().insert("path")
+                        .attr("class", "country")
+                        .attr("d", path)
+                        .attr("id", function (d, i) {
+                            return d.id;
+                        })
+                        .attr("title", function (d, i) {
+                            return d.properties.name;
+                        })
+                        .style("fill", function (d, i) {
+                            return d.properties.color;
+                        })
+                        .style("stroke", "#111")
+                        .on("click", click)
+                        .on("mousemove", function (d, i) {
+                            var mouse = d3.mouse(svg.node()).map(function (d) {
+                                return parseInt(d);
+                            });
+                            tooltip.classed("hidden", false) // relative position of the tooltip
+                                    .attr("style", "left:" + (mouse[0] + offsetL) + "px;top:" + (mouse[1] + offsetT) + "px")
+                                    .html(d.properties.name);
+                        })
+                    // hide tooltip
+                        .on("mouseout", function (d, i) {
+                            tooltip.classed("hidden", true);
+                        });
+
+
+            });
+
+        }
+
+        function click(d) {
+            //click the country
+            var obj = cdata.filter(function (f) {
+                return f.iso_n3 == d.id
+            })[0];
+            loadit(obj);
+        }
+
+// Load of the world-topo-110m json for country selection and zooming
+        function loadit(countryobj) {
+
+            tooltip.attr("class", "tooltip hidden");
+            d3.select("#next").style("visibility", "");
+            d3.select("#previous").style("visibility", "");
+
+            var name = countryobj.name;
+            var code = countryobj.iso_a3;
+            var filename = "data/countries-10m-topojson/" + code + ".json";
+
+            d3.json(filename, function (error, country) {
+
+                var obj = topojson.feature(country, country.objects[code]);
+
+                clear();
+                // Variables for position of the selescted country
+                var b = path.bounds(obj);
+                var s = .55 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
+                // POSITION OF THE SELECTED COUNTRY
+                g.style("stroke-width", 1 / s).attr("transform", "scale(" + s + ")" +
+                        "translate(" + -(b[1][0] + b[0][0]) / 2.2 + "," + -(b[1][1] + b[0][1]) / 2.2 + ")");
+
+                // COLOR OF SELECTED COUNTRY
+                d3.select("#innerg").append("path").datum(obj)
+                        .style("fill", "#08306b")
+                        .style("stroke", "#111")
+                        .attr("d", path);
+
+                //data object to html
+                var html = '';
+
+                for (var o in countryobj) {
+                    if (countryobj.hasOwnProperty(o)) {
+                        var label = o;
+                        var value = countryobj[o];
+                        var info = '<div><label>' + label + '</label><span>' + value + '</span></div>';
+                        html += info; //with formatting
+                    }
+                }
+                // print country's data
+                d3.select("#info").html(html);
+
+            });
+        }
+
+        function clear() {
+            //clear the map
+            d3.selectAll("path").remove();
+            d3.selectAll("circle").remove();
+            d3.selectAll("text").remove();
+            d3.select("#info").html("");
+        }
+    }
+/*
+        highlightCountry.push(function(country) {
+            //highlight the given country in the  map vis
         });
-
     }
 
-
-    function redraw() {
-        width = document.getElementById('container').offsetWidth;
-        height = width / 2;
-        d3.select('svg').remove();
-        setup(width,height);
-        draw(topo);
-    }
-
-
-    function move() {
-
-        var t = d3.event.translate;
-        var s = d3.event.scale;
-        zscale = s;
-        var h = height/4;
-
-
-        t[0] = Math.min(
-                (width/height)  * (s - 1),
-                Math.max( width * (1 - s), t[0] )
-        );
-
-        t[1] = Math.min(
-                h * (s - 1) + h * s,
-                Math.max(height  * (1 - s) - h * s, t[1])
-        );
-
-        zoom.translate(t);
-        g.attr("transform", "translate(" + t + ")scale(" + s + ")");
-
-        //adjust the country hover stroke width based on zoom level
-        d3.selectAll(".country").style("stroke-width", 1.5 / s);
-
-    }
-
-
-
-    var throttleTimer;
-    function throttle() {
-        window.clearTimeout(throttleTimer);
-        throttleTimer = window.setTimeout(function() {
-            redraw();
-        }, 200);
-    }
-
-
-    //geo translation on mouse click in map
-    function click() {
-        var latlon = projection.invert(d3.mouse(this));
-        console.log(latlon);
-    }
-
-
-    //function to add points and text to the map (used in plotting capitals)
-    function addpoint(lat,lon,text) {
-
-        var gpoint = g.append("g").attr("class", "gpoint");
-        var x = projection([lat,lon])[0];
-        var y = projection([lat,lon])[1];
-
-        gpoint.append("svg:circle")
-                .attr("cx", x)
-                .attr("cy", y)
-                .attr("class","point")
-                .attr("r", 1);
-
-        //conditional in case a point has no associated text
-        //if(text.length>0){
-
-        //  gpoint.append("text")
-        //         .attr("x", x+2)
-        //         .attr("y", y+2)
-        //         .attr("class","text")
-        //        .text(text);
-        //}
-
-    }
-
+    streamgraphVis();
+    mapVis();*/
 </script>
+
 </body>
-</html>
