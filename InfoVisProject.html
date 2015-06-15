@@ -107,6 +107,9 @@
 
 </style>
 <body>
+
+<div class="chart"></div>
+
 <div class="block">
     <label for="country">Select a Country:</label>
     <select id="country" name="country"></select>
@@ -128,10 +131,9 @@
 <div id="info"></div>
 
 <!--SOURCES-->
-<script src="js/d3.min.js"></script>
-<script src="js/topojson.v1.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
 <script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
-<script src="js/d3.min.js"></script>
 
 
 <script>
@@ -396,7 +398,7 @@
 
 
         queue()//data queue
-                .defer(d3.csv, "data/countries-data.csv")
+                .defer(d3.csv, "countries-data.csv")
                 .await(ready);
 
         function ready(error, countries) {
@@ -460,11 +462,11 @@
 
             clear();
             g.style("stroke-width", 1).attr("transform", "");
-            d3.json("data/world-topo-110m.json", function (error, world) {
+            d3.json("world-topo-110m.json", function (error, world) {
 
-                var topo = topojson.feature(world, world.objects.countries).features;
+                topo = topojson.feature(world, world.objects.countries);
 
-                var country = d3.select("#innerg").selectAll(".country").data(topo);
+                var country = d3.select("#innerg").selectAll(".country").data(topo.features);
 
                 //ofsets
                 var offsetL = document.getElementById('container').offsetLeft + 30;
@@ -505,25 +507,27 @@
         function click(d) {
             //click the country
             var obj = cdata.filter(function (f) {
-                return f.iso_n3 == d.id
+                return f.name === d.properties.name
             })[0];
-            loadit(obj);
+            loadit(obj, d);
         }
 
 // Load of the world-topo-110m json for country selection and zooming
-        function loadit(countryobj) {
-
+        function loadit(countryobj, obj) {
+            if (typeof obj === 'undefined') {
+                obj = topo.features.filter(function(d) { return d.properties.name === countryobj.name; })[0];
+            }
             tooltip.attr("class", "tooltip hidden");
             d3.select("#next").style("visibility", "");
             d3.select("#previous").style("visibility", "");
 
-            var name = countryobj.name;
-            var code = countryobj.iso_a3;
-            var filename = "data/countries-10m-topojson/" + code + ".json";
+            //var name = countryobj.name;
+            //var code = countryobj.iso_a3;
+            //var filename = "countries-10m-topojson/" + code + ".json";
 
-            d3.json(filename, function (error, country) {
+            //d3.json(filename, function (error, country) {
 
-                var obj = topojson.feature(country, country.objects[code]);
+                //var obj = topojson.feature(country, country.objects[code]);
 
                 clear();
                 // Variables for position of the selescted country
@@ -542,25 +546,27 @@
                 //data object to html
                 var html = '';
 
-                for (var o in countryobj) {
-                    if (countryobj.hasOwnProperty(o)) {
-                        var label = o;
-                        var value = countryobj[o];
-                        var info = '<div><label>' + label + '</label><span>' + value + '</span></div>';
-                        html += info; //with formatting
+                if (countryobj) {
+                    for (var o in countryobj) {
+                        if (countryobj.hasOwnProperty(o)) {
+                            var label = o;
+                            var value = countryobj[o];
+                            var info = '<div><label>' + label + '</label><span>' + value + '</span></div>';
+                            html += info; //with formatting
+                        }
                     }
                 }
                 // print country's data
                 d3.select("#info").html(html);
 
-            });
+            //});
         }
 
         function clear() {
             //clear the map
-            d3.selectAll("path").remove();
-            d3.selectAll("circle").remove();
-            d3.selectAll("text").remove();
+            svg.selectAll("path").remove();
+            svg.selectAll("circle").remove();
+            svg.selectAll("text").remove();
             d3.select("#info").html("");
         }
     }
@@ -572,6 +578,9 @@
 
     streamgraphVis();
     mapVis();*/
+
+    streamgraphVis();
+    mapVis();
 </script>
 
 </body>
