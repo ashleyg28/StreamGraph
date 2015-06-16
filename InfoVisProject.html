@@ -60,7 +60,6 @@
         stroke: #ccc;
         stroke-width: 1px;
     }
-
     #container {
         margin:10px 10%;
         padding:20px;
@@ -72,7 +71,6 @@
     .hidden {
         display: none;
     }
-
     #info{
         margin:14px 10%;
         background: #fff;
@@ -83,28 +81,26 @@
         height:20px;
         clear:both;
     }
-
     #info label {
         font-weight: bold;
         width: 130px;
         display: inline-block;
         text-transform: capitalize;
     }
-/*
-    .hidden {
-        display: none;
-    }*/
-/*    div.tooltip {
-        color: #222;
-        background: #fff;
-        padding: .5em;
-        text-shadow: #f5f5f5 0 1px 0;
-        border-radius: 2px;
-        box-shadow: 0px 0px 2px 0px #a6a6a6;
-        opacity: 0.9;
-        position: absolute;
-    }*/
-
+    /*
+        .hidden {
+            display: none;
+        }*/
+    /*    div.tooltip {
+            color: #222;
+            background: #fff;
+            padding: .5em;
+            text-shadow: #f5f5f5 0 1px 0;
+            border-radius: 2px;
+            box-shadow: 0px 0px 2px 0px #a6a6a6;
+            opacity: 0.9;
+            position: absolute;
+        }*/
 </style>
 <body>
 
@@ -312,14 +308,26 @@
                             vertical.style("left", mousex + "px")});
             });
         }
-
-
-
         highlightCountry.push(function(country) {
             //highlight the given country in the  map vis
+            //document.addEventListener(event, function, useCapture) <-- syntax
+            //infoVisProject.addEventListener("country", triggerHighlight);
+            /*
+             when user chooses/hovers over data in stream graph highlight in geo map
+             if the user mouses over or clicks an area in the stream graph then show/highlight the country
+             in the geo map
+
+            */
+            if (infoVisProject.addEventListener("mouseover", streamgraphVis)) {
+                if(infoVisProject.addEventListener("click", streamgraphVis)){
+                    infoVisProject.addEventListener("country", mapVis);
+                //colorandprint();
+
+             }
+            }
+            triggerHighlight();
         });
     }
-
     function mapVis() {
         //code B with all variables
         (function () {
@@ -330,17 +338,14 @@
                         r.push(e(u)), ++p, t[0].apply(null, r)
                     }
                 }
-
                 function e(n) {
                     return function (u, l) {
                         --p, null == d && (null != u ? (d = u, a = s = 0 / 0, r()) : (c[n] = l, --s ? f || t() : r()))
                     }
                 }
-
                 function r() {
                     null != d ? v(d) : i ? v(d, c) : v.apply(null, [d].concat(c))
                 }
-
                 var o, f, i, c = [], a = 0, p = 0, s = 0, d = null, v = u;
                 return n || (n = 1 / 0), o = {
                     defer: function () {
@@ -352,69 +357,46 @@
                     }
                 }
             }
-
             function u() {
             }
-
             "undefined" == typeof module ? self.queue = n : module.exports = n, n.version = "1.0.4";
             var l = [].slice
         })();
-
         var graticule = d3.geo.graticule();
-
         var width = document.getElementById('container').offsetWidth;
         var height = width / 2;
-
         var topo, projection, path, svg, g, all, cdata,
                 current = 10; //current country, randomly choosen number
-
         var tooltip = d3.select("body").append("div").attr("class", "tooltip hidden");
-
         setup(width, height);
 // MAP SETUP
         function setup(width, height) {
-
             projection = d3.geo.mercator()
                     .translate([(width / 3), (height / .7)])
                     .scale(width / .55 / Math.PI);
-
             path = d3.geo.path().projection(projection);
-
             svg = d3.select("#container").append("svg")
                     .attr("width", width)
                     .attr("height", height);
-
             svg.append("rect")
                     .attr("width", width)
                     .attr("height", height)
                     .style("fill", "#fff")
                     .on("click", loadworldmap);
-
             var outterg = svg.append("g").attr("transform", "translate(" + width / 5.5 + "," + height / 3.5 + ")");
-
             g = outterg.append("g").attr("id", "innerg");
-
         }
-
-
         queue()//data queue
                 .defer(d3.csv, "countries-data.csv")
                 .await(ready);
-
         function ready(error, countries) {
             cdata = countries;
-
-
             loadworldmap();
-
-
             //country dropdown
             var options = '';
             cdata.forEach(function (d) {
-
                 options += '<option value="' + d.iso_a3 + '">' + d.name + '</option>';
             });
-
             d3.select("#country").html(options)
                     .on("change", function () {
                         d3.select("#trend")[0][0].selectedIndex = 0;
@@ -424,27 +406,17 @@
                         })[0];
                         loadit(obj);
                     });
-
             //color countries and print country names to info box
             function colorandprint(objs, title) {
                 d3.selectAll('.country').style('fill', '#deebf7'); //clear
-
-
                 objs.forEach(function (f) {
                     d3.select('.country[title="' + f.name, f.name + '"]').style('fill', '#08306b')
-
-
                 });
-
                 d3.select("#info").html(html);
             }
-
-
             //trend dropdown
             d3.select("#trend").on("change", function () {
-
                 d3.select("#country")[0][0].selectedIndex = 0;
-
                 var sel = this.value;
                 if (sel !== 0) {
                     var objs = cdata.filter(function (f) {
@@ -452,26 +424,18 @@
                     });
                     colorandprint(objs, sel);
                 }
-
             });
-
         }
-
 // DRAWING OF THE MAP
         function loadworldmap() {
-
             clear();
             g.style("stroke-width", 1).attr("transform", "");
             d3.json("world-topo-110m.json", function (error, world) {
-
                 topo = topojson.feature(world, world.objects.countries);
-
                 var country = d3.select("#innerg").selectAll(".country").data(topo.features);
-
                 //ofsets
                 var offsetL = document.getElementById('container').offsetLeft + 30;
                 var offsetT = document.getElementById('container').offsetTop - 30;
-
                 country.enter().insert("path")
                         .attr("class", "country")
                         .attr("d", path)
@@ -498,12 +462,8 @@
                         .on("mouseout", function (d, i) {
                             tooltip.classed("hidden", true);
                         });
-
-
             });
-
         }
-
         function click(d) {
             //click the country
             var obj = cdata.filter(function (f) {
@@ -511,7 +471,6 @@
             })[0];
             loadit(obj, d);
         }
-
 // Load of the world-topo-110m json for country selection and zooming
         function loadit(countryobj, obj) {
             if (typeof obj === 'undefined') {
@@ -520,48 +479,39 @@
             tooltip.attr("class", "tooltip hidden");
             d3.select("#next").style("visibility", "");
             d3.select("#previous").style("visibility", "");
-
             //var name = countryobj.name;
             //var code = countryobj.iso_a3;
             //var filename = "countries-10m-topojson/" + code + ".json";
-
             //d3.json(filename, function (error, country) {
-
-                //var obj = topojson.feature(country, country.objects[code]);
-
-                clear();
-                // Variables for position of the selescted country
-                var b = path.bounds(obj);
-                var s = .55 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
-                // POSITION OF THE SELECTED COUNTRY
-                g.style("stroke-width", 1 / s).attr("transform", "scale(" + s + ")" +
-                        "translate(" + -(b[1][0] + b[0][0]) / 2.2 + "," + -(b[1][1] + b[0][1]) / 2.2 + ")");
-
-                // COLOR OF SELECTED COUNTRY
-                d3.select("#innerg").append("path").datum(obj)
-                        .style("fill", "#08306b")
-                        .style("stroke", "#111")
-                        .attr("d", path);
-
-                //data object to html
-                var html = '';
-
-                if (countryobj) {
-                    for (var o in countryobj) {
-                        if (countryobj.hasOwnProperty(o)) {
-                            var label = o;
-                            var value = countryobj[o];
-                            var info = '<div><label>' + label + '</label><span>' + value + '</span></div>';
-                            html += info; //with formatting
-                        }
+            //var obj = topojson.feature(country, country.objects[code]);
+            clear();
+            // Variables for position of the selescted country
+            var b = path.bounds(obj);
+            var s = .55 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
+            // POSITION OF THE SELECTED COUNTRY
+            g.style("stroke-width", 1 / s).attr("transform", "scale(" + s + ")" +
+                    "translate(" + -(b[1][0] + b[0][0]) / 2.2 + "," + -(b[1][1] + b[0][1]) / 2.2 + ")");
+            // COLOR OF SELECTED COUNTRY
+            d3.select("#innerg").append("path").datum(obj)
+                    .style("fill", "#08306b")
+                    .style("stroke", "#111")
+                    .attr("d", path);
+            //data object to html
+            var html = '';
+            if (countryobj) {
+                for (var o in countryobj) {
+                    if (countryobj.hasOwnProperty(o)) {
+                        var label = o;
+                        var value = countryobj[o];
+                        var info = '<div><label>' + label + '</label><span>' + value + '</span></div>';
+                        html += info; //with formatting
                     }
                 }
-                // print country's data
-                d3.select("#info").html(html);
-
+            }
+            // print country's data
+            d3.select("#info").html(html);
             //});
         }
-
         function clear() {
             //clear the map
             svg.selectAll("path").remove();
@@ -570,15 +520,13 @@
             d3.select("#info").html("");
         }
     }
-/*
-        highlightCountry.push(function(country) {
-            //highlight the given country in the  map vis
-        });
-    }
-
-    streamgraphVis();
-    mapVis();*/
-
+    /*
+     highlightCountry.push(function(country) {
+     //highlight the given country in the  map vis
+     });
+     }
+     streamgraphVis();
+     mapVis();*/
     streamgraphVis();
     mapVis();
 </script>
