@@ -310,6 +310,18 @@
         }
         highlightCountry.push(function(country) {
             //highlight the given country in the  map vis
+            country.key('fill',function(d) {
+                //is country selected in stream graph??
+                //yes <-- return blue (color used through out project)
+                /*if (d === "country") {
+                    return 'blue';
+                } else {
+                    return;
+                }*/
+
+                return d === 'country' ? 'blue': 'black'
+
+            });
             //document.addEventListener(event, function, useCapture) <-- syntax
             //infoVisProject.addEventListener("country", triggerHighlight);
             /*
@@ -318,14 +330,16 @@
              in the geo map
 
             */
-            if (infoVisProject.addEventListener("mouseover", streamgraphVis)) {
+            /*if (infoVisProject.addEventListener("mouseover", streamgraphVis)) {
                 if(infoVisProject.addEventListener("click", streamgraphVis)){
                     infoVisProject.addEventListener("country", mapVis);
                 //colorandprint();
 
              }
             }
-            triggerHighlight();
+            triggerHighlight();*/
+
+
         });
     }
     function mapVis() {
@@ -519,6 +533,10 @@
             svg.selectAll("text").remove();
             d3.select("#info").html("");
         }
+
+        highlightCountry.push(function(country){
+            map.attr('stroke', function(d) {return d === 'country'? 'blue':'black'});
+        });
     }
     /*
      highlightCountry.push(function(country) {
