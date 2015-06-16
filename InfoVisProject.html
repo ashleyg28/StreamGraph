@@ -146,6 +146,7 @@
         chart("Data.csv", "blue");
         var datearray = [];
         var colorrange = [];
+
         function chart(csvpath, color) {
             if (color == "blue") {
                 colorrange = ["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"];
@@ -308,9 +309,18 @@
                             vertical.style("left", mousex + "px")});
             });
         }
+        chart.enter().append('.chart')
+                .attr({
+                    x:0,
+                    height:30,
+                    fill:'black'
+                })
+                .on('click',function(d){
+                    triggerHighlight(d);
+                });
         highlightCountry.push(function(country) {
             //highlight the given country in the  map vis
-            country.key('fill',function(d) {
+            chart.attr('fill',function(d) {
                 //is country selected in stream graph??
                 //yes <-- return blue (color used through out project)
                 /*if (d === "country") {
@@ -534,8 +544,18 @@
             d3.select("#info").html("");
         }
 
+        country.enter().append('country')
+                .attr({
+                    x:0,
+                    height:30,
+                    fill: 'black'
+                })
+                .on('click',function(d){
+                    triggerHighlight(d);
+                });
+
         highlightCountry.push(function(country){
-            map.attr('stroke', function(d) {return d === 'country'? 'blue':'black'});
+            country.attr('stroke', function(d) {return d === 'country'? 'blue':'black'});
         });
     }
     /*
